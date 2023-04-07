@@ -1,21 +1,25 @@
 import { FaCodepen, FaStore, FaUserFriends, FaUsers } from 'react-icons/fa'
 import { useEffect, useContext } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import Spinner from '../components/layout/Spinner'
 import RepoList from '../components/repos/RepoList'
 import GithubContext from '../context/github/GithubContext'
+import { getUserAndRepos } from '../context/github/GithubActions'
 
 function User() {
-  const { getUser, user, loading, getUserRepos, repos } =
-    useContext(GithubContext)
+  const { user, loading, repos, dispatch } = useContext(GithubContext)
 
   const params = useParams()
 
   useEffect(() => {
-    getUser(params.login)
-    getUserRepos(params.login)
-    
-  }, [])
+    dispatch({ type: 'SET_LOADING' })
+    const getUserData = async () => {
+      const userData = await getUserAndRepos(params.login)
+      dispatch({ type: 'GET_USER_AND_REPOS', payload: userData })
+    }
+
+    getUserData()
+  }, [dispatch, params.login])
 
   const {
     name,
@@ -37,6 +41,15 @@ function User() {
   if (loading) {
     return <Spinner />
   }
+
+  // NOTE: check for valid url to users website
+
+  const websiteUrl = blog?.startsWith('http') ? blog : 'https://' + blog
+
+
+  // NOTE: if you are having problems with the name and login showing at the top
+  // of the image then you need the className='flex-grow-0' on the <p> tag
+  // default styling on <p> in daisyUI now has flex-grow-1
 
   return (
     <>
@@ -74,7 +87,7 @@ function User() {
                 <a
                   href={html_url}
                   target='_blank'
-                  rel='norefferer'
+                  rel='noreferrer'
                   className='btn btn-outline'
                 >
                   Visit Github Profile
@@ -93,8 +106,8 @@ function User() {
                 <div className='stat'>
                   <div className='stat-title text-md'>Website</div>
                   <div className='text-lg stat-value'>
-                    <a href={`${blog}`} target='_blank' rel='noreferrer'>
-                      {blog}
+                    <a href={websiteUrl} target='_blank' rel='noreferrer'>
+                      {websiteUrl}
                     </a>
                   </div>
                 </div>
@@ -117,44 +130,46 @@ function User() {
           </div>
         </div>
 
-        <div className='w-full py-5 m-6 rounded-lg shadow-md bg-base-100 stats'>
-          <div className='stat'>
-            <div className='stat-figure text-secondary'>
-              <FaUsers className='text-3xl md:text-5xl' />
+        <div className='w-full py-5 mb-6 rounded-lg shadow-md bg-base-100 stats'>
+          <div className='grid grid-cols-1 md:grid-cols-3'>
+            <div className='stat'>
+              <div className='stat-figure text-secondary'>
+                <FaUsers className='text-3xl md:text-5xl' />
+              </div>
+              <div className='stat-title pr-5'>Followers</div>
+              <div className='stat-value pr-5 text-3xl md:text-4xl'>
+                {followers}
+              </div>
             </div>
-            <div className='stat-title pr-5'>Followers</div>
-            <div className='stat-value pr-5 text-3xl md:text-4xl'>
-              {followers}
-            </div>
-          </div>
 
-          <div className='stat'>
-            <div className='stat-figure text-secondary'>
-              <FaUserFriends className='text-3xl md:text-5xl' />
+            <div className='stat'>
+              <div className='stat-figure text-secondary'>
+                <FaUserFriends className='text-3xl md:text-5xl' />
+              </div>
+              <div className='stat-title pr-5'>Following</div>
+              <div className='stat-value pr-5 text-3xl md:text-4xl'>
+                {following}
+              </div>
             </div>
-            <div className='stat-title pr-5'>Following</div>
-            <div className='stat-value pr-5 text-3xl md:text-4xl'>
-              {following}
-            </div>
-          </div>
 
-          <div className='stat'>
-            <div className='stat-figure text-secondary'>
-              <FaCodepen className='text-3xl md:text-5xl' />
+            <div className='stat'>
+              <div className='stat-figure text-secondary'>
+                <FaCodepen className='text-3xl md:text-5xl' />
+              </div>
+              <div className='stat-title pr-5'>Public Repos</div>
+              <div className='stat-value pr-5 text-3xl md:text-4xl'>
+                {public_repos}
+              </div>
             </div>
-            <div className='stat-title pr-5'>Public Repos</div>
-            <div className='stat-value pr-5 text-3xl md:text-4xl'>
-              {public_repos}
-            </div>
-          </div>
 
-          <div className='stat'>
-            <div className='stat-figure text-secondary'>
-              <FaStore className='text-3xl md:text-5xl' />
-            </div>
-            <div className='stat-title pr-5'>Public Gists</div>
-            <div className='stat-value pr-5 text-3xl md:text-4xl'>
-              {public_gists}
+            <div className='stat'>
+              <div className='stat-figure text-secondary'>
+                <FaStore className='text-3xl md:text-5xl' />
+              </div>
+              <div className='stat-title pr-5'>Public Gists</div>
+              <div className='stat-value pr-5 text-3xl md:text-4xl'>
+                {public_gists}
+              </div>
             </div>
           </div>
         </div>
